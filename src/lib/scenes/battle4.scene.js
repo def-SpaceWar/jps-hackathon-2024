@@ -1,42 +1,37 @@
 import { Scene } from "../scene";
 import { getPlayer } from "../player";
-import { getCtx, loadImage } from "../render";
-import { bgMapStartCorridor, loadBgTileMap, loadFgTileMap, fgMapStartCorridor } from "./sceneTiles";
-import { generateTileMap } from "../tileGen";
-import { Door } from "../door";
+import { AnimatedSprite, getCtx, loadImage } from "../render";
+import { bgMapBattle4, loadBgTileMap, loadFgTileMap, fgMapBattle4 } from "./sceneTiles";
+import { Ladder, generateTileMap } from "../tileGen";
+import { Door, Trapdoor } from "../door";
 import door1Url from "../../assets/png/sprites/door1.png";
-import { door1Animations } from "../../assets/png/sprites/animations";
-import { workshop1 } from "./workshop1.scene";
+import { door1Animations, trapdoorAnimations, hurtChamberAnimations } from "../../assets/png/sprites/animations";
+import { startCorridor } from "./startCorridor.scene";
+import { tutorial } from "./tutorial.scene";
+import { battle3 } from "./battle3.scene";
+import trapdoorUrl from "../../assets/png/sprites/trapdoor.png";
 import { start } from "./start.scene";
 
+import hurtChamberUrl from "../../assets/png/sprites/hurtChamber.png";
 
 async function getStartData(oldData) {
+    const bgTiles = generateTileMap(
+        bgMapBattle4,
+        await loadBgTileMap(),
+        { x: -600, y: -320 },
+        64,
+    );
     const redefines = {
-        camera: { x: 0, y: -250, scale: 1 },
-        bgTiles: generateTileMap(
-            bgMapStartCorridor,
-            await loadBgTileMap(),
-            { x: -800, y: -400 },
-            64, 
-        ),
+        camera: { x: 0, y: 0, scale: 1 },
         fgTiles: generateTileMap(
-            fgMapStartCorridor,
+            fgMapBattle4,
             await loadFgTileMap(),
-            { x: -800, y: -400 },
+            { x: -600, y: -320 },
             64, true,
         ),
-        doors: [
-            new Door(
-                await loadImage(door1Url), door1Animations,
-                -707, -183,
-                start, {x: 265, y: 180}, [],  true,
-            ),
-            new Door(
-                await loadImage(door1Url), door1Animations,
-                765, -183,
-                workshop1, {x: -100, y: 100}, [], false,
-            ),
-        ],
+        doors: [],
+        interactables: [],
+        ladders: bgTiles.flatMap(t => t.isLadder ? new Ladder(t) : []),
     };
     if (oldData.player) {
         return {
@@ -45,18 +40,20 @@ async function getStartData(oldData) {
         }
     }
     return {
-        ctx: getCtx(),
+        ctx,
         player: await getPlayer(),
         ...redefines,
     };
 }
-export const startCorridor = new Scene({
+export const battle4 = new Scene({
     getData: getStartData,
 
     update(dt, exit) {
         this.data.player.update(dt);
         this.data.player.unCollide(this.data.fgTiles);
         this.data.player.goThroughDoor(this.data.doors, exit, this.data);
+        this.data.player.checkInteractables(this.data.interactables);
+        this.data.player.checkLadders(this.data.ladders);
     },
 
     render(dt) {
@@ -76,8 +73,11 @@ export const startCorridor = new Scene({
             -this.data.camera.y,
         );
 
+        ctx.scale(this.data.camera.scale, this.data.camera.scale);
+
         this.data.bgTiles.forEach(t => t.render());
         this.data.fgTiles.forEach(t => t.render());
+        this.data.interactables.forEach(i => i.render(dt));
         this.data.player.render(dt);
         this.data.doors.forEach(d => d.render(dt));
         ctx.restore();

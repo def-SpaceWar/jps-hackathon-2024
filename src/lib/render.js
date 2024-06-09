@@ -4,7 +4,7 @@ let ctx;
 let uiCtx;
 
 export const getCtx = () => ctx,
-    getUiCtx = () => getUiCtx();
+    getUiCtx = () => uiCtx;
 
 export function setupMainCtx(canvas) {
     ctx = canvas.getContext("2d");
@@ -73,6 +73,7 @@ export class AnimatedSprite {
         }
 
         const currentAnimationKeyframe = currentAnimationKeyframes[i];
+        ctx.save();
         ctx.scale(this.wpp,this.hpp);
 		ctx.imageSmoothingEnabled = false;
         ctx.drawImage(
@@ -86,5 +87,6 @@ export class AnimatedSprite {
             currentAnimationKeyframe[2] | 0,
             currentAnimationKeyframe[3] | 0,
         );
+        ctx.restore();
     }
 }

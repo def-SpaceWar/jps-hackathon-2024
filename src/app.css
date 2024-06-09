@@ -1,3 +1,10 @@
+@font-face {
+    font-family: 'BulkyPix';
+    src: url('ttf/BULKYPIX.TTF');
+    font-weight: normal;
+    font-style: normal;
+}
+
 body {
     margin: 0;
     padding: 0;
